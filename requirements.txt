@@ -1,4 +1,3 @@
-Cython==0.15.1
-cartopy==0.13.1
+cartopy
 dbfread
 matplotlib
