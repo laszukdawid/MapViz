@@ -1,3 +1,4 @@
+Cython
 cartopy==0.13.1
 dbfread
 matplotlib
