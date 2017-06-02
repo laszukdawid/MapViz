@@ -24,6 +24,13 @@ Then go into the downloaded project and run from command line:
     $ python setup.py install
 
 
+Requirements
+============
+
+*MapViz* depends on cartopy_, which itself requires `Proj4` in version 4.9. 
+
+.. _cartopy: http://scitools.org.uk/cartopy/
+
 Contact
 *******
 
