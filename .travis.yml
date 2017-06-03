@@ -11,7 +11,7 @@ before_install:
   - sudo apt-get install -y libc6
   - wget http://es.archive.ubuntu.com/ubuntu/pool/universe/p/proj/libproj9_4.9.2-2_amd64.deb 
   - sudo dpkg -i libproj9_4.9.2-2_amd64.deb 
-  - wget http://es.archive.ubuntu.com/ubuntu/pool/universe/p/proj/libproj-dev_4.9.2-3_amd64.deb
-  - sudo dpkg -i libproj-dev_4.9.2-3_amd64.deb
+  - wget http://es.archive.ubuntu.com/ubuntu/pool/universe/p/proj/libproj-dev_4.9.2-2_amd64.deb
+  - sudo dpkg -i libproj-dev_4.9.2-2_amd64.deb
 install:
   - pip install -r requirements.txt
