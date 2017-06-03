@@ -15,3 +15,5 @@ before_install:
   - sudo dpkg -i libproj-dev_4.9.2-2_amd64.deb
 install:
   - pip install -r requirements.txt
+script:
+  - python setup.py install
