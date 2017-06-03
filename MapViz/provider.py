@@ -1,7 +1,17 @@
+# Coding: UTF-8
 from __future__ import print_function
 import os
+import sys
+import zipfile
 
 class Provider(object):
+    """Maintains paths for shapefiles.
+
+    Class provides paths to stored shapefiles for different units and
+    data types. If requested shapefiles is not present, Provider will
+    download it from `EuroStat` and store it in designed location,
+    which by default is `$USER/.shapefile`.
+    """
 
     _unit_types_dict = {"COUNTRY": "CNTR", "NUTS": "NUTS"}
     _unit_types_list = _unit_types_dict.keys()
@@ -21,6 +31,7 @@ class Provider(object):
     def _download_template(self, **options):
         """
         Eurostat is inconsistent with its naming convention.
+
         """
         unit = options["UNIT"]
         year = str(options["YEAR"])
@@ -34,7 +45,6 @@ class Provider(object):
         return file_template.format(**options)
 
     def download_shapefile(self, **options):
-        import sys
         if sys.version[0]=="2":
             from urllib2 import urlopen
         else:
@@ -59,37 +69,11 @@ class Provider(object):
         url = self._url + download_filename
         print(url)
 
-        # Downloading a file
-        u = urlopen(url)
-
-        f = open(save_filename, 'wb')
-        meta = u.info()
-        if hasattr(meta, 'getheaders'):
-            meta_length = meta.getheaders("Content-Length")
-        else:
-            meta_length = meta.get_all("Content-Length")
-        file_size = int(meta_length[0])
-        print("Downloading: %s Bytes: %s" % (download_filename, file_size))
-
-        file_size_dl = 0
-        block_sz = 8192
-        while True:
-            buffer = u.read(block_sz)
-            if not buffer:
-                break
-
-            file_size_dl += len(buffer)
-            f.write(buffer)
-
-            # Progress bar
-            status = r"%10d  [%3.2f%%]" % (file_size_dl, file_size_dl * 100. / file_size)
-            status = status + chr(8)*(len(status)+1)
-            print(status, end="")
-
-        f.close()
+        # Download shapefile
+        u_request = urlopen(url)
+        self._download_progress(save_filename, u_request)
 
         # Unzip downloaded file
-        import zipfile
         zip_ref = zipfile.ZipFile(save_filename, 'r')
         zip_ref.extractall(os.path.expanduser(self.home_path))
         zip_ref.close()
@@ -100,7 +84,48 @@ class Provider(object):
         # Delete tmp zip file
         os.remove(save_filename)
 
+    def _download_progress(self, save_filename, u_request):
+        """
+        Downloads file from request and saves it under save_filename.
+        Note: Yes, it contains progress status.
+        """
+        with open(save_filename, 'wb') as f:
+            meta = u_request.info()
+            if hasattr(meta, 'getheaders'):
+                meta_length = meta.getheaders("Content-Length")
+            else:
+                meta_length = meta.get_all("Content-Length")
+            file_size = int(meta_length[0])
+            print("Downloading into: %s\nTotal bytes: %s" % (save_filename, file_size))
+
+            file_size_dl = 0
+            block_sz = 8192
+            while True:
+                buffer = u_request.read(block_sz)
+                if not buffer:
+                    break
+
+                file_size_dl += len(buffer)
+                f.write(buffer)
+
+                # Progress bar
+                status = r"%10d  [%3.2f%%]" % (file_size_dl, file_size_dl * 100. / file_size)
+                status = status + chr(8)*(len(status)+1)
+                print(status, end="")
+
+        return True
+
     def get_path(self, unit_type=None, year=None, resolution=None):
+        """Returns paths to shapefiles with specified options.
+
+        Args:
+            unit_type (str): Type of unit, e.g. `NUTS`.
+            year (int): Maps creation year.
+            resolution (str): Resolution, e.g. `20m`.
+
+        Returns:
+            dict: Paths to `region` and `boundry` shapefiles.
+        """
         if not unit_type is None:
             self.unit_type = unit_type
 
@@ -124,7 +149,6 @@ class Provider(object):
         settings["RES"] = self.resolution.zfill(3)
 
         setname = self.save_template.format(**settings)
-        print(setname)
 
         # Expand path
         path = os.path.join(self.home_path, setname)
@@ -145,7 +169,6 @@ class Provider(object):
             msg = "There is no `data` dir inside path: "+str(path)
             raise ValueError(msg)
 
-
         # And the final RG file
         filename_template = "{UNIT}_{T}_{RES}_{YEAR}.shp"
         path = os.path.join(path, filename_template)
@@ -160,5 +183,3 @@ class Provider(object):
 if __name__ == "__main__":
     p = Provider("nuts", 2010, "20m")
     print(p.get_path())
-
-
